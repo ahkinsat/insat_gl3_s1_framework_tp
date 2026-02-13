@@ -1,0 +1,54 @@
+@model TP.Models.CustomerMovieViewModel
+
+@{
+    ViewData["Title"] = "Customer Movies";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Customer Details</h2>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Customer?.Name</h5>
+                    <p class="card-text">
+                        <strong>Customer ID:</strong> @Model.Customer?.Id
+                    </p>
+                </div>
+            </div>
+            
+            <h3 class="mb-3">Customer's Movies</h3>
+            
+            @if (Model.Movies != null && Model.Movies.Any())
+            {
+                <div class="row">
+                    @foreach (var movie in Model.Movies)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">@movie.Name</h5>
+                                    <p class="card-text">Movie ID: @movie.Id</p>
+                                    <a asp-action="Details" asp-route-id="@movie.Id" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    No movies found for this customer.
+                </div>
+            }
+            
+            <div class="mt-3">
+                <a asp-action="Index" class="btn btn-secondary">Back to Movie List</a>
+            </div>
+        </div>
+    </div>
+</div>

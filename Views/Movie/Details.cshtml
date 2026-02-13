@@ -1,0 +1,24 @@
+@model TP.Models.Movie
+
+@{
+    ViewData["Title"] = "Movie Details";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <img src="https://via.placeholder.com/400x200?text=Movie+Poster" class="card-img-top" alt="Movie poster">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Name</h5>
+                    <p class="card-text">
+                        <strong>ID:</strong> @Model.Id<br>
+                        <strong>Release Date:</strong> Coming soon<br>
+                        <strong>Genre:</strong> Not specified
+                    </p>
+                    <a href="@Url.Action("Index")" class="btn btn-primary">Back to List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
