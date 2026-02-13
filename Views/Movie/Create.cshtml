@@ -1,4 +1,4 @@
-@model TP.Models.Movie
+@model TP.Models.MovieVM
 
 @{
     ViewData["Title"] = "Create Movie";
@@ -9,21 +9,45 @@
     
     <div class="row">
         <div class="col-md-6">
-            <form asp-action="Create">
+            <form asp-action="Create" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 
+                @if (ViewBag.Errors != null)
+                {
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach (string error in ViewBag.Errors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                
                 <div class="form-group mb-3">
-                    <label asp-for="Name" class="control-label"></label>
-                    <input asp-for="Name" class="form-control" />
-                    <span asp-validation-for="Name" class="text-danger"></span>
+                    <label asp-for="Movie.Name" class="control-label">Movie Name</label>
+                    <input asp-for="Movie.Name" class="form-control" />
+                    <span asp-validation-for="Movie.Name" class="text-danger"></span>
                 </div>
-
+                
                 <div class="form-group mb-3">
-                    <label asp-for="GenreId" class="control-label">Genre</label>
-                    <select asp-for="GenreId" class="form-control" asp-items="@(ViewData["Genres"] as SelectList)">
+                    <label asp-for="Movie.DateTimeMovie" class="control-label">Release Date</label>
+                    <input asp-for="Movie.DateTimeMovie" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="Movie.DateTimeMovie" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Movie.GenreId" class="control-label">Genre</label>
+                    <select asp-for="Movie.GenreId" class="form-control" asp-items="ViewBag.Genres">
                         <option value="">-- No Genre --</option>
                     </select>
-                    <span asp-validation-for="GenreId" class="text-danger"></span>
+                    <span asp-validation-for="Movie.GenreId" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Photo" class="control-label">Movie Poster</label>
+                    <input asp-for="Photo" class="form-control" type="file" accept="image/*" />
+                    <span asp-validation-for="Photo" class="text-danger"></span>
                 </div>
                 
                 <div class="form-group">

@@ -11,10 +11,12 @@ namespace TP.Controllers;
 public class MovieController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public MovieController(ApplicationDbContext context)
+    public MovieController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
     {
         _context = context;
+        _webHostEnvironment = webHostEnvironment;
     }
 
     public async Task<IActionResult> Index(string sortOrder, int? page)
@@ -73,23 +75,52 @@ public class MovieController : Controller
     // GET: Movie/Create
     public IActionResult Create()
     {
-        ViewData["Genres"] = new SelectList(_context.Genres, "Id", "Name");
+        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name");
         return View();
     }
 
     // POST: Movie/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Create(Movie movie)
+    public IActionResult Create(MovieVM model)
     {
         if (ModelState.IsValid)
         {
-            _context.Add(movie);
+            if (model.Photo != null)
+            {
+                // Ensure wwwroot/images directory exists
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+                Directory.CreateDirectory(uploadsFolder);
+
+                // Generate unique filename
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Save file
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    model.Photo.CopyTo(fileStream);
+                }
+
+                model.Movie.ImageFile = uniqueFileName;
+            }
+
+            _context.Movies.Add(model.Movie);
             _context.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
-        return View(movie);
+
+        // If we got this far, something failed, redisplay form
+        ViewBag.Errors = ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToList();
+
+        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", model.Movie.GenreId);
+        return View(model);
     }
+
+
     // GET: Movie/Edit/5
     public IActionResult Edit(int? id)
     {
@@ -104,31 +135,93 @@ public class MovieController : Controller
             return NotFound();
         }
 
-        // Pass genres to view
-        ViewData["Genres"] = new SelectList(_context.Genres, "Id", "Name", movie.GenreId);
-        return View(movie);
+        // Create MovieVM with existing movie data
+        var movieVM = new MovieVM
+        {
+            Movie = movie
+        };
+
+        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", movie.GenreId);
+        return View(movieVM);
     }
 
     // POST: Movie/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(int id, Movie movie)
+    public IActionResult Edit(int id, MovieVM model)
     {
-        if (id != movie.Id)
+        if (id != model.Movie.Id)
         {
             return NotFound();
         }
 
         if (ModelState.IsValid)
         {
-            _context.Update(movie);
-            _context.SaveChanges();
+            try
+            {
+                var existingMovie = _context.Movies.Find(id);
+                if (existingMovie == null)
+                {
+                    return NotFound();
+                }
+
+                // Handle photo upload if new one provided
+                if (model.Photo != null)
+                {
+                    // Delete old image if exists
+                    if (!string.IsNullOrEmpty(existingMovie.ImageFile))
+                    {
+                        string oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", existingMovie.ImageFile);
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                    }
+
+                    // Save new image
+                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+                    Directory.CreateDirectory(uploadsFolder);
+
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        model.Photo.CopyTo(fileStream);
+                    }
+
+                    existingMovie.ImageFile = uniqueFileName;
+                }
+
+                // Update other properties
+                existingMovie.Name = model.Movie.Name;
+                existingMovie.DateTimeMovie = model.Movie.DateTimeMovie;
+                existingMovie.GenreId = model.Movie.GenreId;
+
+                _context.Update(existingMovie);
+                _context.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Movies.Any(m => m.Id == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
             return RedirectToAction(nameof(Index));
         }
 
-        // If model state invalid, reload genres and return view
-        ViewData["Genres"] = new SelectList(_context.Genres, "Id", "Name", movie.GenreId);
-        return View(movie);
+        ViewBag.Errors = ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToList();
+
+        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", model.Movie.GenreId);
+        return View(model);
     }
 
     public IActionResult ByRelease(int year, int month)

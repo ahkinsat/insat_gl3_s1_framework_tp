@@ -10,19 +10,41 @@
     <div class="row">
         <div class="col-md-6">
             <div class="card">
-                <img src="https://via.placeholder.com/400x200?text=Movie+Poster" class="card-img-top" alt="Movie poster">
+                @if (!string.IsNullOrEmpty(Model.ImageFile))
+                {
+                    <img src="/images/@Model.ImageFile" class="card-img-top" alt="Movie poster" style="max-height: 400px; object-fit: cover;" />
+                }
+                else
+                {
+                    <img src="https://via.placeholder.com/400x200?text=No+Poster" class="card-img-top" alt="No poster available">
+                }
+                
                 <div class="card-body">
                     <h5 class="card-title">@Model.Name</h5>
                     
                     <dl class="row">
-                        <dt class="col-sm-3">ID</dt>
-                        <dd class="col-sm-9">@Model.Id</dd>
+                        @*
+                        <dt class="col-sm-4">ID</dt>
+                        <dd class="col-sm-8">@Model.Id</dd>
+                        *@
                         
-                        <dt class="col-sm-3">Name</dt>
-                        <dd class="col-sm-9">@Model.Name</dd>
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">@Model.Name</dd>
                         
-                        <dt class="col-sm-3">Genre</dt>
-                        <dd class="col-sm-9">
+                        <dt class="col-sm-4">Release Date</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.DateTimeMovie != null)
+                            {
+                                @Model.DateTimeMovie.Value.ToString("MMMM dd, yyyy")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not specified</span>
+                            }
+                        </dd>
+                        
+                        <dt class="col-sm-4">Genre</dt>
+                        <dd class="col-sm-8">
                             @if (Model.Genre != null)
                             {
                                 @Model.Genre.Name
@@ -32,10 +54,26 @@
                                 <span class="text-muted">No Genre</span>
                             }
                         </dd>
+                        
+                        @*
+                        <dt class="col-sm-4">Poster</dt>
+                        <dd class="col-sm-8">
+                            @if (!string.IsNullOrEmpty(Model.ImageFile))
+                            {
+                                <span>@Model.ImageFile</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No poster</span>
+                            }
+                        </dd>
+                        *@
                     </dl>
                     
-                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Edit</a>
-                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    <div class="mt-3">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TP.Data;
 
@@ -10,9 +11,11 @@ using TP.Data;
 namespace tp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260213140640_SeedMembershipTypes")]
+    partial class SeedMembershipTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.13");
@@ -30,35 +33,6 @@ namespace tp.Migrations
                     b.HasIndex("MoviesId");
 
                     b.ToTable("MovieCustomers", (string)null);
-                });
-
-            modelBuilder.Entity("TP.Models.AuditLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Changes")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EntityKey")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TableName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("TP.Models.Customer", b =>
@@ -168,26 +142,6 @@ namespace tp.Migrations
                     b.HasIndex("GenreId");
 
                     b.ToTable("Movies");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 101,
-                            DateTimeMovie = new DateTime(1994, 9, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "The Shawshank Redemption"
-                        },
-                        new
-                        {
-                            Id = 102,
-                            DateTimeMovie = new DateTime(1972, 3, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "The Godfather"
-                        },
-                        new
-                        {
-                            Id = 103,
-                            DateTimeMovie = new DateTime(1994, 10, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Pulp Fiction"
-                        });
                 });
 
             modelBuilder.Entity("CustomerMovie", b =>

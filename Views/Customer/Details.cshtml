@@ -1,0 +1,75 @@
+@model TP.Models.Customer
+
+@{
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="container mt-4">
+    <h2>Customer Details</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Name</h5>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-4">ID</dt>
+                        <dd class="col-sm-8">@Model.Id</dd>
+                        
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">@Model.Name</dd>
+                        
+                        <dt class="col-sm-4">Membership</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.MembershipType != null)
+                            {
+                                @Model.MembershipType.Name
+                            }
+                            else
+                            {
+                                <span class="text-muted">No membership</span>
+                            }
+                        </dd>
+                        
+                        <dt class="col-sm-4">Discount Rate</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.MembershipType != null)
+                            {
+                                @($"{Model.MembershipType.DiscountRate}%")
+                            }
+                            else
+                            {
+                                <span class="text-muted">0%</span>
+                            }
+                        </dd>
+                    </dl>
+                    
+                    <h6 class="mt-4">Movies Rented</h6>
+                    @if (Model.Movies != null && Model.Movies.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var movie in Model.Movies)
+                            {
+                                <li class="list-group-item">
+                                    <a asp-controller="Movie" asp-action="Details" asp-route-id="@movie.Id">
+                                        @movie.Name
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No movies rented</p>
+                    }
+                    
+                    <div class="mt-3">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
