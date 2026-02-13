@@ -20,3 +20,35 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    padding-left: 0;
+    list-style: none;
+    border-radius: .25rem;
+}
+
+.pagination li{
+    margin: 0 2px;
+    position: relative;
+    display: block;
+    padding: .5rem .75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+
+    a {
+        color: #007bff;
+    }
+}
+
+.pagination li.active a {
+    z-index: 1;
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}

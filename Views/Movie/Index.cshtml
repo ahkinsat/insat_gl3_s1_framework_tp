@@ -1,4 +1,4 @@
-@model IEnumerable<TP.Models.Movie>
+@model IPagedList<TP.Models.Movie>
 
 @{
     ViewData["Title"] = "Movie List";
@@ -9,12 +9,25 @@
         <div class="col-12">
             <h2 class="mb-4">Movie List</h2>
             
+            <p>
+                <a asp-action="Create" class="btn btn-success">Create New Movie</a>
+            </p>
+            
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th>ID</th>
-                            <th>Movie Name</th>
+                            <th>
+                                <a asp-action="Index" asp-route-sortOrder="@ViewData["IdSortParm"]" asp-route-pageNumber="@ViewData["CurrentPage"]">
+                                    ID
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-pageNumber="@ViewData["CurrentPage"]">
+                                    Movie Name
+                                </a>
+                            </th>
+                            <th>Genre</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -24,15 +37,29 @@
                             <tr>
                                 <td>@item.Id</td>
                                 <td>@item.Name</td>
+                                <td>@item.Genre?.Name</td>  <!-- Display genre name -->
                                 <td>
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
-                                        View Details
-                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Details</a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Delete</a>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
+            </div>
+            
+            <!-- Pagination controls -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    @Html.PagedListPager(Model, page => Url.Action("Index", new { sortOrder = ViewData["CurrentSort"], page }))
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <p>Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount</p>
+                </div>
             </div>
         </div>
     </div>

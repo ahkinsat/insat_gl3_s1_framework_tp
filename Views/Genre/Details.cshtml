@@ -1,0 +1,64 @@
+@model TP.Models.Genre
+
+@{
+    ViewData["Title"] = "Genre Details";
+}
+
+<div class="container mt-4">
+    <h2>Genre Details</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">
+                            @Html.DisplayNameFor(model => model.Id)
+                        </dt>
+                        <dd class="col-sm-9">
+                            @Html.DisplayFor(model => model.Id)
+                        </dd>
+                        
+                        <dt class="col-sm-3">
+                            @Html.DisplayNameFor(model => model.Name)
+                        </dt>
+                        <dd class="col-sm-9">
+                            @Html.DisplayFor(model => model.Name)
+                        </dd>
+                    </dl>
+                    
+                    <div>
+                        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Edit</a>
+                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Movies in this genre -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4>Movies in this Genre</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.Movies is { Count: > 0 })
+                    {
+                        <ul class="list-group">
+                            @foreach (var movie in Model.Movies)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    @movie.Name
+                                    <a asp-controller="Movie" asp-action="Details" asp-route-id="@movie.Id" 
+                                       class="btn btn-sm btn-outline-primary">View</a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No movies in this genre yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
