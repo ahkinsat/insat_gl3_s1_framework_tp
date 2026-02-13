@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "LINQ Test Results";
+}
+
+<h1>LINQ Query Results</h1>
+
+<h2>Action Movies In Stock</h2>
+<ul>
+    @foreach (var movie in ViewBag.ActionMovies)
+    {
+        <li>@movie.Name - Stock: @movie.Stock</li>
+    }
+</ul>
+
+<h2>Movies Ordered by Date Then Name</h2>
+<ul>
+    @foreach (var movie in ViewBag.OrderedMovies)
+    {
+        <li>@movie.Name - @movie.DateTimeMovie</li>
+    }
+</ul>
+
+<h2>Total Movie Count: @ViewBag.TotalMovies</h2>
+
+<h2>Subscribed Customers with >10% Discount</h2>
+<ul>
+    @foreach (var customer in ViewBag.SubscribedCustomers)
+    {
+        <li>@customer.Name - Discount: @customer.MembershipType?.DiscountRate%</li>
+    }
+</ul>
+
+<h2>Movies with Genres</h2>
+<ul>
+    @foreach (var item in ViewBag.MoviesWithGenres)
+    {
+        <li>@item.MovieTitle - @item.GenreName</li>
+    }
+</ul>
+
+<h2>Top 3 Most Popular Genres</h2>
+<ul>
+    @foreach (var genre in ViewBag.TopGenres)
+    {
+        <li>@genre.Name - (@genre.Movies?.Count movies)</li>
+    }
+</ul>

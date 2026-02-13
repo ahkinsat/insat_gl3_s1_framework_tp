@@ -1,27 +1,26 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using TP.Data;
 using TP.Models;
+using TP.Data;
+using TP.Services.Interfaces;
 
 namespace TP.Controllers;
 
 public class CustomerController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ICustomerService _customerService;
+    private readonly ApplicationDbContext _context; // Still needed for membership dropdown
 
-    public CustomerController(ApplicationDbContext context)
+    public CustomerController(ICustomerService customerService, ApplicationDbContext context)
     {
+        _customerService = customerService;
         _context = context;
     }
 
     // GET: Customer
     public IActionResult Index()
     {
-        var customers = _context.Customers
-            .Include(c => c.MembershipType)
-            .ToList();
-        return View(customers);
+        return View(_customerService.GetAllCustomers());
     }
 
     // GET: Customer/Details/5
@@ -32,11 +31,7 @@ public class CustomerController : Controller
             return NotFound();
         }
 
-        var customer = _context.Customers
-            .Include(c => c.MembershipType)
-            .Include(c => c.Movies)
-            .FirstOrDefault(c => c.Id == id);
-            
+        var customer = _customerService.GetCustomerById(id.Value);
         if (customer == null)
         {
             return NotFound();
@@ -59,8 +54,7 @@ public class CustomerController : Controller
     {
         if (ModelState.IsValid)
         {
-            _context.Customers.Add(customer);
-            _context.SaveChanges();
+            _customerService.AddCustomer(customer);
             return RedirectToAction(nameof(Index));
         }
         
@@ -81,7 +75,7 @@ public class CustomerController : Controller
             return NotFound();
         }
 
-        var customer = _context.Customers.Find(id);
+        var customer = _customerService.GetCustomerById(id.Value);
         if (customer == null)
         {
             return NotFound();
@@ -105,12 +99,11 @@ public class CustomerController : Controller
         {
             try
             {
-                _context.Update(customer);
-                _context.SaveChanges();
+                _customerService.UpdateCustomer(customer);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!_context.Customers.Any(c => c.Id == id))
+                if (_customerService.GetCustomerById(id) == null)
                 {
                     return NotFound();
                 }
@@ -139,10 +132,7 @@ public class CustomerController : Controller
             return NotFound();
         }
 
-        var customer = _context.Customers
-            .Include(c => c.MembershipType)
-            .FirstOrDefault(c => c.Id == id);
-            
+        var customer = _customerService.GetCustomerById(id.Value);
         if (customer == null)
         {
             return NotFound();
@@ -156,12 +146,7 @@ public class CustomerController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(int id)
     {
-        var customer = _context.Customers.Find(id);
-        if (customer != null)
-        {
-            _context.Customers.Remove(customer);
-            _context.SaveChanges();
-        }
+        _customerService.DeleteCustomer(id);
         return RedirectToAction(nameof(Index));
     }
 }

@@ -1,38 +1,34 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using TP.Models;
-using TP.Data;
+using TP.Services.Interfaces;
 
 namespace TP.Controllers;
 
 public class GenreController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IGenreService _genreService;
 
-    public GenreController(ApplicationDbContext context)
+    public GenreController(IGenreService genreService)
     {
-        _context = context;
+        _genreService = genreService;
     }
 
     // GET: Genre
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        return View(await _context.Genres.ToListAsync());
+        return View(_genreService.GetAllGenres());
     }
 
-
     // GET: Genre/Details/5
-    public async Task<IActionResult> Details(Guid? id)
+    public IActionResult Details(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var genre = await _context.Genres
-            .Include(g => g.Movies)  // Include related movies
-            .FirstOrDefaultAsync(m => m.Id == id);
-
+        var genre = _genreService.GetGenreById(id.Value);
         if (genre == null)
         {
             return NotFound();
@@ -50,27 +46,31 @@ public class GenreController : Controller
     // POST: Genre/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Name")] Genre genre)
+    public IActionResult Create(Genre genre)
     {
         if (ModelState.IsValid)
         {
-            genre.Id = Guid.NewGuid();
-            _context.Add(genre);
-            await _context.SaveChangesAsync();
+            _genreService.AddGenre(genre);
             return RedirectToAction(nameof(Index));
         }
+        
+        ViewBag.Errors = ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToList();
+            
         return View(genre);
     }
 
     // GET: Genre/Edit/5
-    public async Task<IActionResult> Edit(Guid? id)
+    public IActionResult Edit(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var genre = await _context.Genres.FindAsync(id);
+        var genre = _genreService.GetGenreById(id.Value);
         if (genre == null)
         {
             return NotFound();
@@ -81,7 +81,7 @@ public class GenreController : Controller
     // POST: Genre/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name")] Genre genre)
+    public IActionResult Edit(Guid id, Genre genre)
     {
         if (id != genre.Id)
         {
@@ -92,12 +92,11 @@ public class GenreController : Controller
         {
             try
             {
-                _context.Update(genre);
-                await _context.SaveChangesAsync();
+                _genreService.UpdateGenre(genre);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!GenreExists(genre.Id))
+                if (!_genreService.GenreExists(id))
                 {
                     return NotFound();
                 }
@@ -108,21 +107,24 @@ public class GenreController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
+        
+        ViewBag.Errors = ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToList();
+            
         return View(genre);
     }
 
     // GET: Genre/Delete/5
-    public async Task<IActionResult> Delete(Guid? id)
+    public IActionResult Delete(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var genre = await _context.Genres
-            .Include(g => g.Movies)  // Include to check if has movies
-            .FirstOrDefaultAsync(m => m.Id == id);
-
+        var genre = _genreService.GetGenreById(id.Value);
         if (genre == null)
         {
             return NotFound();
@@ -134,29 +136,9 @@ public class GenreController : Controller
     // POST: Genre/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    public IActionResult DeleteConfirmed(Guid id)
     {
-        var genre = await _context.Genres
-            .Include(g => g.Movies)
-            .FirstOrDefaultAsync(g => g.Id == id);
-
-        if (genre != null)
-        {
-            // Optional: Check if genre has movies before deleting
-            if (genre.Movies != null && genre.Movies.Any())
-            {
-                TempData["Error"] = "Cannot delete genre with existing movies";
-                return RedirectToAction(nameof(Index));
-            }
-
-            _context.Genres.Remove(genre);
-            await _context.SaveChangesAsync();
-        }
+        _genreService.DeleteGenre(id);
         return RedirectToAction(nameof(Index));
-    }
-
-    private bool GenreExists(Guid id)
-    {
-        return _context.Genres.Any(e => e.Id == id);
     }
 }

@@ -10,6 +10,8 @@ public class Movie
     
     public string? ImageFile { get; set; }
     public DateTime? DateTimeMovie { get; set; }
+
+    public int Stock { get; set; }
     
     // Many-to-Many with Customers
     public ICollection<Customer>? Customers { get; set; }

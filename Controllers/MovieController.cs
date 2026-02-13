@@ -5,29 +5,32 @@ using TP.Models;
 using TP.Data;
 using X.PagedList;
 using X.PagedList.Mvc.Core;
+using TP.Services.Interfaces;
 
 namespace TP.Controllers;
 
 public class MovieController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IMovieService _movieService;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ApplicationDbContext _context; // Still needed for genres dropdown
 
-    public MovieController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+    public MovieController(IMovieService movieService, IWebHostEnvironment webHostEnvironment, ApplicationDbContext context)
     {
-        _context = context;
+        _movieService = movieService;
         _webHostEnvironment = webHostEnvironment;
+        _context = context;
     }
 
-    public async Task<IActionResult> Index(string sortOrder, int? page)
+    // GET: Movie
+    public IActionResult Index(string sortOrder, int? page)
     {
         ViewData["CurrentSort"] = sortOrder;
         ViewData["IdSortParm"] = string.IsNullOrEmpty(sortOrder) ? "id_desc" : "";
         ViewData["NameSortParm"] = sortOrder == "name" ? "name_desc" : "name";
-
-        var movies = from m in _context.Movies.Include(m => m.Genre)
-                     select m;
-
+        
+        var movies = _movieService.GetAllMovies().AsQueryable();
+        
         // Sorting
         switch (sortOrder)
         {
@@ -44,12 +47,12 @@ public class MovieController : Controller
                 movies = movies.OrderBy(m => m.Id);
                 break;
         }
-
+        
         // Pagination
         int pageSize = 3;
         int pageNumber = (page ?? 1);
-
-        return View(await movies.ToPagedListAsync(pageNumber, pageSize));
+        
+        return View(movies.ToPagedList(pageNumber, pageSize));
     }
 
     // GET: Movie/Details/5
@@ -60,10 +63,7 @@ public class MovieController : Controller
             return NotFound();
         }
 
-        var movie = _context.Movies
-            .Include(m => m.Genre)  // Include the genre
-            .FirstOrDefault(m => m.Id == id);
-
+        var movie = _movieService.GetMovieById(id.Value);
         if (movie == null)
         {
             return NotFound();
@@ -88,38 +88,32 @@ public class MovieController : Controller
         {
             if (model.Photo != null)
             {
-                // Ensure wwwroot/images directory exists
                 string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                 Directory.CreateDirectory(uploadsFolder);
-
-                // Generate unique filename
+                
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                // Save file
+                
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     model.Photo.CopyTo(fileStream);
                 }
-
+                
                 model.Movie.ImageFile = uniqueFileName;
             }
-
-            _context.Movies.Add(model.Movie);
-            _context.SaveChanges();
+            
+            _movieService.AddMovie(model.Movie);
             return RedirectToAction(nameof(Index));
         }
-
-        // If we got this far, something failed, redisplay form
+        
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-
+        
         ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", model.Movie.GenreId);
         return View(model);
     }
-
 
     // GET: Movie/Edit/5
     public IActionResult Edit(int? id)
@@ -129,18 +123,17 @@ public class MovieController : Controller
             return NotFound();
         }
 
-        var movie = _context.Movies.Find(id);
+        var movie = _movieService.GetMovieById(id.Value);
         if (movie == null)
         {
             return NotFound();
         }
-
-        // Create MovieVM with existing movie data
+        
         var movieVM = new MovieVM
         {
             Movie = movie
         };
-
+        
         ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", movie.GenreId);
         return View(movieVM);
     }
@@ -159,13 +152,13 @@ public class MovieController : Controller
         {
             try
             {
-                var existingMovie = _context.Movies.Find(id);
+                var existingMovie = _movieService.GetMovieById(id);
                 if (existingMovie == null)
                 {
                     return NotFound();
                 }
-
-                // Handle photo upload if new one provided
+                
+                // Handle photo upload
                 if (model.Photo != null)
                 {
                     // Delete old image if exists
@@ -177,31 +170,30 @@ public class MovieController : Controller
                             System.IO.File.Delete(oldFilePath);
                         }
                     }
-
+                    
                     // Save new image
                     string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                     Directory.CreateDirectory(uploadsFolder);
-
+                    
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
+                    
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         model.Photo.CopyTo(fileStream);
                     }
-
+                    
                     existingMovie.ImageFile = uniqueFileName;
                 }
-
+                
                 // Update other properties
                 existingMovie.Name = model.Movie.Name;
                 existingMovie.DateTimeMovie = model.Movie.DateTimeMovie;
                 existingMovie.GenreId = model.Movie.GenreId;
-
-                _context.Update(existingMovie);
-                _context.SaveChanges();
+                
+                _movieService.UpdateMovie(existingMovie);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
                 if (!_context.Movies.Any(m => m.Id == id))
                 {
@@ -214,35 +206,14 @@ public class MovieController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-
+        
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-
+        
         ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", model.Movie.GenreId);
         return View(model);
-    }
-
-    public IActionResult ByRelease(int year, int month)
-    {
-        return Content($"Released in: {month}/{year}");
-    }
-
-    [Route("Movie/released/{year}/{month}")]
-    public IActionResult ByReleaseAttribute(int year, int month)
-    {
-        return Content($"Released in (attribute): {month}/{year}");
-    }
-
-    public IActionResult CustomerMovies()
-    {
-        var viewModel = new CustomerMovieViewModel
-        {
-            Customer = new Customer { Id = 1, Name = "John Doe" },
-            Movies = _context.Movies.ToList()
-        };
-        return View(viewModel);
     }
 
     // GET: Movie/Delete/5
@@ -253,11 +224,12 @@ public class MovieController : Controller
             return NotFound();
         }
 
-        var movie = _context.Movies.FirstOrDefault(m => m.Id == id);
+        var movie = _movieService.GetMovieById(id.Value);
         if (movie == null)
         {
             return NotFound();
         }
+
         return View(movie);
     }
 
@@ -266,12 +238,30 @@ public class MovieController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(int id)
     {
-        var movie = _context.Movies.Find(id);
-        if (movie != null)
-        {
-            _context.Movies.Remove(movie);
-            _context.SaveChanges();
-        }
+        _movieService.DeleteMovie(id);
         return RedirectToAction(nameof(Index));
+    }
+
+    // GET: Movie/CustomerMovies (from TP1)
+    public IActionResult CustomerMovies()
+    {
+        var viewModel = new CustomerMovieViewModel
+        {
+            Customer = new Customer { Id = 1, Name = "John Doe" },
+            Movies = _movieService.GetAllMovies().ToList()
+        };
+        return View(viewModel);
+    }
+
+    // GET: Movie/ByRelease (from TP1)
+    public IActionResult ByRelease(int year, int month)
+    {
+        return Content($"Released in: {month}/{year}");
+    }
+
+    [Route("Movie/released/{year}/{month}")]
+    public IActionResult ByReleaseAttribute(int year, int month)
+    {
+        return Content($"Released in (attribute): {month}/{year}");
     }
 }
