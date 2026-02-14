@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TP.Data;
 
@@ -10,9 +11,11 @@ using TP.Data;
 namespace tp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260214103133_AddIdentityTables")]
+    partial class AddIdentityTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.13");
@@ -171,9 +174,6 @@ namespace tp.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("City")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -368,14 +368,9 @@ namespace tp.Migrations
                     b.Property<int>("Stock")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
                     b.HasIndex("GenreId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Movies");
 
@@ -484,13 +479,7 @@ namespace tp.Migrations
                         .WithMany("Movies")
                         .HasForeignKey("GenreId");
 
-                    b.HasOne("TP.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Genre");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TP.Models.Genre", b =>

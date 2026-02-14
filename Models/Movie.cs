@@ -12,6 +12,8 @@ public class Movie
     public DateTime? DateTimeMovie { get; set; }
 
     public int Stock { get; set; }
+
+    public ApplicationUser? User { get; set; }
     
     // Many-to-Many with Customers
     public ICollection<Customer>? Customers { get; set; }

@@ -1,21 +1,24 @@
 using Microsoft.EntityFrameworkCore;
 using TP.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using System.Text.Json;
 using System.IO;
 
 namespace TP.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public ApplicationDbContext(
-        DbContextOptions<ApplicationDbContext> options
-    ) : base(options) { }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
 
-    public DbSet<Movie> Movies { get; set; }
-    public DbSet<Genre> Genres { get; set; }
-    public DbSet<Customer> Customers { get; set; }
-    public DbSet<MembershipType> MembershipTypes { get; set; }
-    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<Movie> Movies { get; set; } = default!;
+    public DbSet<Genre> Genres { get; set; } = default!;
+    public DbSet<Customer> Customers { get; set; } = default!;
+    public DbSet<MembershipType> MembershipTypes { get; set; } = default!;
+    public DbSet<AuditLog> AuditLogs { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
