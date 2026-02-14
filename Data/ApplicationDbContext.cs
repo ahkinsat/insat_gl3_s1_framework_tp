@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Customer> Customers { get; set; } = default!;
     public DbSet<MembershipType> MembershipTypes { get; set; } = default!;
     public DbSet<AuditLog> AuditLogs { get; set; } = default!;
+    public DbSet<UserCart> UserCarts { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,6 +64,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 SignUpFee = 100
             }
         );
+
+        modelBuilder.Entity<UserCart>()
+            .HasOne(uc => uc.User)
+            .WithMany()
+            .HasForeignKey(uc => uc.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserCart>()
+            .HasOne(uc => uc.Movie)
+            .WithMany()
+            .HasForeignKey(uc => uc.MovieId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Seed Movies from JSON
         string movieJson = File.ReadAllText("Movies.json");
