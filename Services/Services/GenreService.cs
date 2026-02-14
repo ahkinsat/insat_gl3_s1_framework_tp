@@ -1,73 +1,61 @@
-using Microsoft.EntityFrameworkCore;
-using TP.Data;
 using TP.Models;
+using TP.Repositories.Interfaces;
 using TP.Services.Interfaces;
 
 namespace TP.Services;
 
 public class GenreService : IGenreService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IGenreRepository _genreRepository;
+    private readonly IMovieRepository _movieRepository;
 
-    public GenreService(ApplicationDbContext context)
+
+    public GenreService(IGenreRepository genreRepository, IMovieRepository movieRepository)
     {
-        _context = context;
+        _genreRepository = genreRepository;
+        _movieRepository = movieRepository;
     }
 
     public IEnumerable<Genre> GetAllGenres()
     {
-        return _context.Genres
-            .Include(g => g.Movies)
-            .ToList();
+        return _genreRepository.GetAll();
     }
 
     public Genre? GetGenreById(Guid id)
     {
-        return _context.Genres
-            .Include(g => g.Movies)
-            .FirstOrDefault(g => g.Id == id);
+        return _genreRepository.GetGenreWithMovies(id);
     }
 
     public void AddGenre(Genre genre)
     {
         genre.Id = Guid.NewGuid();
-        _context.Genres.Add(genre);
-        _context.SaveChanges();
+        _genreRepository.Add(genre);
+        _genreRepository.SaveChanges();
     }
 
     public void UpdateGenre(Genre genre)
     {
-        _context.Genres.Update(genre);
-        _context.SaveChanges();
+        _genreRepository.Update(genre);
+        _genreRepository.SaveChanges();
     }
 
     public void DeleteGenre(Guid id)
     {
-        var genre = _context.Genres
-            .Include(g => g.Movies)
-            .FirstOrDefault(g => g.Id == id);
-
+        var genre = _genreRepository.GetById(id);
         if (genre != null)
         {
-            // Optional: Check if genre has movies before deleting
-            _context.Genres.Remove(genre);
-            _context.SaveChanges();
+            _genreRepository.Delete(genre);
+            _genreRepository.SaveChanges();
         }
     }
 
     public bool GenreExists(Guid id)
     {
-        return _context.Genres.Any(g => g.Id == id);
+        return _genreRepository.GetById(id) != null;
     }
 
     public IEnumerable<Genre> GetTop3PopularGenres()
     {
-        return _context.Genres
-            .Include(g => g.Movies)
-            .Select(g => new { Genre = g, MovieCount = _context.Movies.Count(m => m.GenreId == g.Id) })
-            .OrderByDescending(x => x.MovieCount)
-            .Take(3)
-            .Select(x => x.Genre)
-            .ToList();
+        return _movieRepository.GetTop3PopularGenres(); // We need to inject IMovieRepository
     }
 }

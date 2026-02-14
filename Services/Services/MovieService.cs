@@ -1,87 +1,68 @@
-using Microsoft.EntityFrameworkCore;
-using TP.Data;
 using TP.Models;
+using TP.Repositories.Interfaces;
 using TP.Services.Interfaces;
 
 namespace TP.Services;
 
 public class MovieService : IMovieService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IMovieRepository _movieRepository;
 
-    public MovieService(ApplicationDbContext context)
+    public MovieService(IMovieRepository movieRepository)
     {
-        _context = context;
+        _movieRepository = movieRepository;
     }
 
     public IEnumerable<Movie> GetAllMovies()
     {
-        return _context.Movies
-            .Include(m => m.Genre)
-            .ToList();
+        return _movieRepository.GetMoviesWithGenre();
     }
 
     public Movie? GetMovieById(int id)
     {
-        return _context.Movies
-            .Include(m => m.Genre)
-            .FirstOrDefault(m => m.Id == id);
+        return _movieRepository.GetById(id);
     }
 
     public void AddMovie(Movie movie)
     {
-        _context.Movies.Add(movie);
-        _context.SaveChanges();
+        _movieRepository.Add(movie);
+        _movieRepository.SaveChanges();
     }
 
     public void UpdateMovie(Movie movie)
     {
-        _context.Movies.Update(movie);
-        _context.SaveChanges();
+        _movieRepository.Update(movie);
+        _movieRepository.SaveChanges();
     }
 
     public void DeleteMovie(int id)
     {
-        var movie = _context.Movies.Find(id);
+        var movie = _movieRepository.GetById(id);
         if (movie != null)
         {
-            _context.Movies.Remove(movie);
-            _context.SaveChanges();
+            _movieRepository.Delete(movie);
+            _movieRepository.SaveChanges();
         }
     }
 
+    // LINQ methods
     public IEnumerable<Movie> GetActionMoviesInStock()
     {
-        return _context.Movies
-            .Include(m => m.Genre)
-            .Where(m => m.Genre != null && m.Genre.Name == "Action" && m.Stock > 0)
-            .ToList();
+        return _movieRepository.GetActionMoviesInStock();
     }
 
     public IEnumerable<Movie> GetMoviesOrderedByDateThenName()
     {
-        return _context.Movies
-            .OrderBy(m => m.DateTimeMovie)
-            .ThenBy(m => m.Name)
-            .ToList();
+        return _movieRepository.GetMoviesOrderedByDateThenName();
     }
 
     public int GetTotalMovieCount()
     {
-        return _context.Movies.Count();
+        return _movieRepository.GetAll().Count();
     }
 
     public IEnumerable<object> GetMoviesWithGenres()
     {
-        return _context.Movies
-            .Join(_context.Genres,
-                movie => movie.GenreId,
-                genre => genre.Id,
-                (movie, genre) => new
-                {
-                    MovieTitle = movie.Name,
-                    GenreName = genre.Name
-                })
-            .ToList();
+        return _movieRepository.GetMoviesWithGenresJoin();
     }
 }

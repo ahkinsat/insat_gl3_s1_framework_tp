@@ -3,18 +3,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using TP.Models;
 using TP.Data;
 using TP.Services.Interfaces;
+using TP.Repositories.Interfaces;
 
 namespace TP.Controllers;
 
 public class CustomerController : Controller
 {
     private readonly ICustomerService _customerService;
-    private readonly ApplicationDbContext _context; // Still needed for membership dropdown
+    private readonly IMembershipTypeRepository _membershipTypeRepository;
 
-    public CustomerController(ICustomerService customerService, ApplicationDbContext context)
+    public CustomerController(ICustomerService customerService, IMembershipTypeRepository membershipTypeRepository)
     {
         _customerService = customerService;
-        _context = context;
+        _membershipTypeRepository = membershipTypeRepository;
     }
 
     // GET: Customer
@@ -43,7 +44,7 @@ public class CustomerController : Controller
     // GET: Customer/Create
     public IActionResult Create()
     {
-        ViewBag.MembershipTypes = new SelectList(_context.MembershipTypes, "Id", "Name");
+        ViewBag.MembershipTypes = new SelectList(_membershipTypeRepository.GetAll(), "Id", "Name");
         return View();
     }
 
@@ -57,13 +58,14 @@ public class CustomerController : Controller
             _customerService.AddCustomer(customer);
             return RedirectToAction(nameof(Index));
         }
-        
+
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-        
-        ViewBag.MembershipTypes = new SelectList(_context.MembershipTypes, "Id", "Name", customer.MembershipTypeId);
+
+        ViewBag.MembershipTypes = new SelectList(_membershipTypeRepository.GetAll(), "Id", "Name");
+
         return View(customer);
     }
 
@@ -80,8 +82,8 @@ public class CustomerController : Controller
         {
             return NotFound();
         }
-        
-        ViewBag.MembershipTypes = new SelectList(_context.MembershipTypes, "Id", "Name", customer.MembershipTypeId);
+
+        ViewBag.MembershipTypes = new SelectList(_membershipTypeRepository.GetAll(), "Id", "Name", customer.MembershipTypeId);
         return View(customer);
     }
 
@@ -114,13 +116,13 @@ public class CustomerController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-        
+
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-        
-        ViewBag.MembershipTypes = new SelectList(_context.MembershipTypes, "Id", "Name", customer.MembershipTypeId);
+
+        ViewBag.MembershipTypes = new SelectList(_membershipTypeRepository.GetAll(), "Id", "Name");
         return View(customer);
     }
 

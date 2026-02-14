@@ -53,12 +53,12 @@ public class GenreController : Controller
             _genreService.AddGenre(genre);
             return RedirectToAction(nameof(Index));
         }
-        
+
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-            
+
         return View(genre);
     }
 
@@ -107,12 +107,12 @@ public class GenreController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-        
+
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-            
+
         return View(genre);
     }
 

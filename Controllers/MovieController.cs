@@ -6,6 +6,7 @@ using TP.Data;
 using X.PagedList;
 using X.PagedList.Mvc.Core;
 using TP.Services.Interfaces;
+using TP.Repositories.Interfaces;
 
 namespace TP.Controllers;
 
@@ -13,13 +14,15 @@ public class MovieController : Controller
 {
     private readonly IMovieService _movieService;
     private readonly IWebHostEnvironment _webHostEnvironment;
-    private readonly ApplicationDbContext _context; // Still needed for genres dropdown
+    private readonly IGenreRepository _genreRepository;
+    private readonly IMovieRepository _movieRepository;
 
-    public MovieController(IMovieService movieService, IWebHostEnvironment webHostEnvironment, ApplicationDbContext context)
+    public MovieController(IMovieService movieService, IWebHostEnvironment webHostEnvironment, IGenreRepository genreRepository, IMovieRepository movieRepository)
     {
         _movieService = movieService;
         _webHostEnvironment = webHostEnvironment;
-        _context = context;
+        _genreRepository = genreRepository;
+        _movieRepository = movieRepository;
     }
 
     // GET: Movie
@@ -28,9 +31,9 @@ public class MovieController : Controller
         ViewData["CurrentSort"] = sortOrder;
         ViewData["IdSortParm"] = string.IsNullOrEmpty(sortOrder) ? "id_desc" : "";
         ViewData["NameSortParm"] = sortOrder == "name" ? "name_desc" : "name";
-        
+
         var movies = _movieService.GetAllMovies().AsQueryable();
-        
+
         // Sorting
         switch (sortOrder)
         {
@@ -47,11 +50,11 @@ public class MovieController : Controller
                 movies = movies.OrderBy(m => m.Id);
                 break;
         }
-        
+
         // Pagination
         int pageSize = 3;
         int pageNumber = (page ?? 1);
-        
+
         return View(movies.ToPagedList(pageNumber, pageSize));
     }
 
@@ -72,10 +75,10 @@ public class MovieController : Controller
         return View(movie);
     }
 
-    // GET: Movie/Create
+    // Update Create GET:
     public IActionResult Create()
     {
-        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name");
+        ViewBag.Genres = new SelectList(_genreRepository.GetAll(), "Id", "Name");
         return View();
     }
 
@@ -90,32 +93,32 @@ public class MovieController : Controller
             {
                 string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                 Directory.CreateDirectory(uploadsFolder);
-                
+
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                
+
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     model.Photo.CopyTo(fileStream);
                 }
-                
+
                 model.Movie.ImageFile = uniqueFileName;
             }
-            
+
             _movieService.AddMovie(model.Movie);
             return RedirectToAction(nameof(Index));
         }
-        
+
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-        
-        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", model.Movie.GenreId);
+
+        ViewBag.Genres = new SelectList(_genreRepository.GetAll(), "Id", "Name", model.Movie.GenreId);
         return View(model);
     }
-
-    // GET: Movie/Edit/5
+    
+    // Update Edit GET:
     public IActionResult Edit(int? id)
     {
         if (id == null)
@@ -128,13 +131,13 @@ public class MovieController : Controller
         {
             return NotFound();
         }
-        
+
         var movieVM = new MovieVM
         {
             Movie = movie
         };
-        
-        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", movie.GenreId);
+
+        ViewBag.Genres = new SelectList(_genreRepository.GetAll(), "Id", "Name", movie.GenreId);
         return View(movieVM);
     }
 
@@ -157,7 +160,7 @@ public class MovieController : Controller
                 {
                     return NotFound();
                 }
-                
+
                 // Handle photo upload
                 if (model.Photo != null)
                 {
@@ -170,32 +173,32 @@ public class MovieController : Controller
                             System.IO.File.Delete(oldFilePath);
                         }
                     }
-                    
+
                     // Save new image
                     string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                     Directory.CreateDirectory(uploadsFolder);
-                    
+
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                    
+
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         model.Photo.CopyTo(fileStream);
                     }
-                    
+
                     existingMovie.ImageFile = uniqueFileName;
                 }
-                
+
                 // Update other properties
                 existingMovie.Name = model.Movie.Name;
                 existingMovie.DateTimeMovie = model.Movie.DateTimeMovie;
                 existingMovie.GenreId = model.Movie.GenreId;
-                
+
                 _movieService.UpdateMovie(existingMovie);
             }
             catch (Exception)
             {
-                if (!_context.Movies.Any(m => m.Id == id))
+                if (!_movieRepository.GetAll().Any(m => m.Id == id))
                 {
                     return NotFound();
                 }
@@ -206,13 +209,13 @@ public class MovieController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-        
+
         ViewBag.Errors = ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .ToList();
-        
-        ViewBag.Genres = new SelectList(_context.Genres, "Id", "Name", model.Movie.GenreId);
+
+        ViewBag.Genres = new SelectList(_genreRepository.GetAll(), "Id", "Name", model.Movie.GenreId);
         return View(model);
     }
 

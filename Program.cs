@@ -2,10 +2,21 @@ using Microsoft.EntityFrameworkCore;
 using TP.Data;
 using TP.Services;
 using TP.Services.Interfaces;
+using TP.Repositories;
+using TP.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Register Generic Repository
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+// Register Specific Repositories
+builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IMembershipTypeRepository, MembershipTypeRepository>();
+
+// Register Specific Services
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
